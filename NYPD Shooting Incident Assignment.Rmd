@@ -1,0 +1,126 @@
+---
+title: "NYPD Shooting Incident Assignment"
+author: ''
+date: "2023-01-17"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+Above I included the two libraries I would be using for this assignment.
+
+
+```{r data}
+url <- 'https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD'
+Shooting_Incident <- read_csv(url)
+Shooting_Incident
+```
+Above the NYPD Shooting Incident Report was imported and named url, then it is read and renamed Shooting_Incident.
+
+
+```{r New Data Table}
+Shooting_Incident <- Shooting_Incident %>%
+  pivot_longer(cols = -c(INCIDENT_KEY, OCCUR_DATE, OCCUR_TIME, BORO, PRECINCT, LOCATION_DESC, 
+                         STATISTICAL_MURDER_FLAG,PERP_AGE_GROUP, PERP_SEX, PERP_RACE,VIC_AGE_GROUP, 
+                         VIC_SEX, VIC_RACE, X_COORD_CD, Y_COORD_CD, Latitude, Longitude, Lon_Lat),
+               names_to = "New York",
+               values_to = "Code") %>%
+              
+  select(-c(X_COORD_CD, Y_COORD_CD, Latitude, Longitude, 
+            Lon_Lat, STATISTICAL_MURDER_FLAG, PERP_AGE_GROUP, 
+            PERP_AGE_GROUP, PERP_SEX, PERP_RACE, VIC_AGE_GROUP, 
+            VIC_SEX, VIC_RACE))
+
+Shooting_Incident
+```
+
+Above code is create a new table of data based on the shooting incident data. It is removing all of these columns X_COORD_CD, Y_COORD_CD, Latitude, Longitude, Lon_Lat, STATISTICAL_MURDER_FLAG, PERP_AGE_GROUP, PERP_AGE_GROUP, PERP_SEX, PERP_RACE, VIC_AGE_GROUP, VIC_SEX, VIC_RACE. In order to make it more specific to the updated table of data above. As well as creating two new columns called New York and Code, based on the orignial column of Jurisdiction_Code.
+
+```{r Combining Columns}
+Shooting_Incident <- Shooting_Incident %>%
+  unite("Jurisdicton Code",
+        c(`New York`, Code),
+        sep = " - ",
+        na.rm = TRUE,
+        remove = FALSE)
+```
+
+Above code is combinging the New York column and code column to create a united column called Jurisdiction Code in the shooting incident data.
+
+```{r Removing Columns}
+Shooting_Incident <- Shooting_Incident %>%
+  select(-c(Code, `New York`))
+Shooting_Incident
+```
+
+Above code is removing certain columns from the shooting incident data.
+
+```{r Summary}
+summary(Shooting_Incident)
+```
+Above code provides a summary of the shooting incident data.
+
+```{r Box Plot of Shooting Incidents}
+Shooting_Incident %>%
+  ggplot(aes(x = BORO, y = OCCUR_TIME)) +
+  geom_boxplot(aes(color = 'Shooting Incident'))+
+  labs(title = "Approximate Shooting Incident Time in each NY Boro")
+```
+
+Above code creates a visualization of approximate time of shooting and what Boro the shooting occurred in.
+
+```{r Plot Count of Shooting Incidents}
+Shooting_Incident %>%
+  ggplot(aes(x = OCCUR_TIME, y = PRECINCT)) +
+  geom_count(aes(color = "PRECINCT")) +
+  scale_y_binned(n.breaks = 38)+
+  labs(title = "Precinct involved with each shooting incidient")
+```
+
+Above code creates visualization of the counts of shootings based on precinct and time.
+
+```{r Analysis of Shooting Incident Data}
+Shooting_Incident %>%
+  group_by(BORO) %>%
+  summarize(OCCUR_DATE = max(OCCUR_DATE))
+Shooting_Incident %>%
+  group_by(BORO) %>%
+  summarize(OCCUR_DATE = min(OCCUR_DATE))
+Shooting_Incident %>%
+  group_by(OCCUR_DATE) %>%
+  summarize(OCCUR_TIME = max(OCCUR_TIME))
+Shooting_Incident %>%
+  group_by(OCCUR_DATE) %>%
+  summarize(OCCUR_TIME = min(OCCUR_TIME))
+Shooting_Incident %>%
+  group_by(BORO, PRECINCT) %>%
+  summarize(OCCUR_TIME_MIN = min(OCCUR_TIME), 
+            OCCUR_TIME_MAX = max(OCCUR_TIME))
+```
+
+Above summarizes and analyzes shooting incident data and provides tables to provide clear summaries. 
+
+```{r}
+model <- lm(OCCUR_TIME ~ LOCATION_DESC, data = Shooting_Incident)
+summary.data.frame(model)
+
+```
+
+Above is creating a model of OCCUR_TIME as a function of LOCATION_DESC, using the data from Shooting_Incident. As well as providing a summary of the data frame using the model as input
+
+
+
+
+Overall this concludes the analysis of NYPD Shooting Incidents, based on the two provide data visualizations. We can see the a majority of the shootings occur during the night or late evening. Additionally it seems the majority of the shootings involved the precincts numbers between 20 to 50, 65 to 90, and 100 to 120. 
+
+There is possible sources of bias in that this data comes from New York, which is a state that I am not located in. So I do not have as much interest in the data. If the data came from the same state I live in, I would have more interest and desire to see what the data would look like and where might the majority of shootings take place and when. However, to try to mitigate this bias, I needed to put myself in a position in that I would think that I lived in New York and would want to know what the data shows for the cases of shootings. In that I had to wear the shoes of someone who does like in New York and made myself more caring to what this data represented because even if it is not the state I live in, there are many people who do and it is important to accurately show representation of a serious issue at hand and this data can be used for important research how how to prevent and decrease shooting incidents. Also, when computing this data and creating new tables and data visualizations, I removed certain columns and adjust visualizations to best suit what I was wanted to get out of it. However, by doing this, I could have neglected other important factors that could affect the data. As well as the results could have changed slightly or in more of a drastic way. So these are possible biases that I could have created based on how I proceeded with my process of analysis and creation of this assignment. In that all the other students that are completely this assignment as well, may find different parts of the data more important to include over what I believed to be important and used to create my assignment. 
